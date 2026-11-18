@@ -44,7 +44,7 @@ class NavegadorViewController: UIViewController {
                                         action: #selector(irAdelante))
         botonAtras.isEnabled = false
         botonAdelante.isEnabled = false
-        navigationItem.leftBarButtonItems = [botonAtras, botonAdelante]
+        navigationItem.rightBarButtonItems = [botonAtras, botonAdelante]
 
         searchBar.placeholder = "Escribe una dirección https"
         searchBar.delegate = self
