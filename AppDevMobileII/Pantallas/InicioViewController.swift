@@ -2,8 +2,6 @@ import UIKit
 
 class InicioViewController: UIViewController {
 
-    // MARK: - Componentes
-
     private let tituloLabel: UILabel = {
         let label = UILabel()
         label.text = "DevMobile II"
@@ -24,18 +22,14 @@ class InicioViewController: UIViewController {
         return button
     }()
 
-    // MARK: - Ciclo de vida
-
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
-        title = "Inicio"
         configurarUI()
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        // La pantalla de inicio no usa barra de navegacion.
         navigationController?.setNavigationBarHidden(true, animated: false)
     }
 
@@ -44,8 +38,6 @@ class InicioViewController: UIViewController {
         navigationController?.setNavigationBarHidden(false, animated: false)
     }
 
-    // MARK: - Layout
-
     private func configurarUI() {
         view.addSubview(tituloLabel)
         view.addSubview(comenzarButton)
@@ -53,11 +45,6 @@ class InicioViewController: UIViewController {
         comenzarButton.round()
         comenzarButton.addTarget(self, action: #selector(comenzarTapped), for: .touchUpInside)
 
-        // El boton queda centrado vertical y horizontalmente.
-        let centradoVertical = comenzarButton.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor)
-        let centradoHorizontal = comenzarButton.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor)
-
-        // El titulo va centrado en la parte superior, separado 12 del area segura.
         NSLayoutConstraint.activate([
             tituloLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor,
                                              constant: Constantes.vertical),
@@ -66,8 +53,8 @@ class InicioViewController: UIViewController {
             tituloLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor,
                                                   constant: -Constantes.horizontal),
 
-            centradoVertical,
-            centradoHorizontal,
+            comenzarButton.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
+            comenzarButton.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
             comenzarButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor,
                                                     constant: Constantes.horizontal),
             comenzarButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor,
@@ -76,13 +63,8 @@ class InicioViewController: UIViewController {
         ])
     }
 
-    // MARK: - Acciones
-
     @objc private func comenzarTapped() {
         comenzarButton.bounce()
-
-        // Navegacion por codigo, sin segue.
-        let login = LoginViewController(nibName: nil, bundle: nil)
-        navigationController?.pushViewController(login, animated: true)
+        navigationController?.pushViewController(LoginViewController(), animated: true)
     }
 }

@@ -3,8 +3,6 @@ import CoreData
 
 class TareasViewController: UIViewController {
 
-    // MARK: - Componentes
-
     private let tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .plain)
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "celdaTarea")
@@ -12,10 +10,7 @@ class TareasViewController: UIViewController {
         return tableView
     }()
 
-    /// Lista en memoria que se recupera desde Core Data.
     private var tareas: [NSManagedObject] = []
-
-    // MARK: - Ciclo de vida
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,29 +21,23 @@ class TareasViewController: UIViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        cargarTareas()   // NSFetchRequest + reloadData
+        cargarTareas()
     }
-
-    // MARK: - Layout
 
     private func configurarUI() {
         tableView.dataSource = self
         tableView.delegate = self
         view.addSubview(tableView)
 
-        // Boton "+" en la barra de navegacion.
         let agregar = UIBarButtonItem(barButtonSystemItem: .add,
                                       target: self,
                                       action: #selector(agregarTarea))
-
-        // Boton para continuar al navegador (navegacion por codigo).
         let web = UIBarButtonItem(title: "Web",
                                   style: .plain,
                                   target: self,
                                   action: #selector(irAlNavegador))
         navigationItem.rightBarButtonItems = [agregar, web]
 
-        // Table View anclado al area segura en los cuatro lados.
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
@@ -56,8 +45,6 @@ class TareasViewController: UIViewController {
             tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
     }
-
-    // MARK: - Core Data
 
     private func cargarTareas() {
         let contexto = Constantes.contexto
@@ -74,7 +61,7 @@ class TareasViewController: UIViewController {
 
     private func guardarTarea(nombre: String) {
         let contexto = Constantes.contexto
-        let entidad = NSEntityDescription.entity(forEntityName: "Tarea", in: contexto)!
+        guard let entidad = NSEntityDescription.entity(forEntityName: "Tarea", in: contexto) else { return }
         let tarea = NSManagedObject(entity: entidad, insertInto: contexto)
         tarea.setValue(nombre, forKey: "nombre")
 
@@ -99,8 +86,6 @@ class TareasViewController: UIViewController {
         }
     }
 
-    // MARK: - Acciones
-
     @objc private func agregarTarea() {
         let alerta = UIAlertController(title: "Nueva tarea",
                                        message: "Escribe el nombre de la tarea",
@@ -123,30 +108,25 @@ class TareasViewController: UIViewController {
     }
 
     @objc private func irAlNavegador() {
-        let navegador = NavegadorViewController(nibName: nil, bundle: nil)
+        let navegador = NavegadorViewController()
         navegador.cantidadTareas = tareas.count
         navigationController?.pushViewController(navegador, animated: true)
     }
 }
 
-// MARK: - UITableViewDataSource
-
 extension TareasViewController: UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return tareas.count
+        tareas.count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let celda = tableView.dequeueReusableCell(withIdentifier: "celdaTarea", for: indexPath)
-        let tarea = tareas[indexPath.row]
-        celda.textLabel?.text = tarea.value(forKey: "nombre") as? String
+        celda.textLabel?.text = tareas[indexPath.row].value(forKey: "nombre") as? String
         celda.accessoryType = .none
         return celda
     }
 }
-
-// MARK: - UITableViewDelegate
 
 extension TareasViewController: UITableViewDelegate {
 

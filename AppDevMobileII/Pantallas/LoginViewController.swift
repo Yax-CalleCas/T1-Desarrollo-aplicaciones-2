@@ -2,8 +2,6 @@ import UIKit
 
 class LoginViewController: UIViewController {
 
-    // MARK: - Componentes
-
     private let usuarioTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = "Usuario"
@@ -48,8 +46,6 @@ class LoginViewController: UIViewController {
         return button
     }()
 
-    // MARK: - Ciclo de vida
-
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
@@ -58,8 +54,6 @@ class LoginViewController: UIViewController {
         cargarUsuario()
     }
 
-    // MARK: - Layout
-
     private func configurarUI() {
         view.addSubview(usuarioTextField)
         view.addSubview(contrasenaTextField)
@@ -67,16 +61,10 @@ class LoginViewController: UIViewController {
         view.addSubview(cerrarSesionButton)
 
         ingresarButton.round()
-
         usuarioTextField.delegate = self
         contrasenaTextField.delegate = self
-
         ingresarButton.addTarget(self, action: #selector(ingresarTapped), for: .touchUpInside)
         cerrarSesionButton.addTarget(self, action: #selector(cerrarSesionTapped), for: .touchUpInside)
-
-        // El boton "Ingresar" queda centrado vertical y horizontalmente.
-        let centradoVertical = ingresarButton.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor)
-        let centradoHorizontal = ingresarButton.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor)
 
         NSLayoutConstraint.activate([
             usuarioTextField.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor,
@@ -93,8 +81,8 @@ class LoginViewController: UIViewController {
             contrasenaTextField.bottomAnchor.constraint(equalTo: ingresarButton.topAnchor,
                                                         constant: -Constantes.vertical),
 
-            centradoVertical,
-            centradoHorizontal,
+            ingresarButton.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
+            ingresarButton.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
             ingresarButton.leadingAnchor.constraint(equalTo: usuarioTextField.leadingAnchor),
             ingresarButton.trailingAnchor.constraint(equalTo: usuarioTextField.trailingAnchor),
             ingresarButton.heightAnchor.constraint(equalToConstant: 52),
@@ -105,11 +93,8 @@ class LoginViewController: UIViewController {
         ])
     }
 
-    // MARK: - UserDefaults
-
     private func cargarUsuario() {
-        let guardado = UserDefaults.standard.string(forKey: Constantes.kUsuario)
-        usuarioTextField.text = guardado
+        usuarioTextField.text = UserDefaults.standard.string(forKey: Constantes.kUsuario)
     }
 
     private func validarCampos() -> String? {
@@ -128,7 +113,16 @@ class LoginViewController: UIViewController {
         return nil
     }
 
-    // MARK: - Acciones
+    private func validarContrasena() -> String? {
+        guard let guardada = UserDefaults.standard.string(forKey: Constantes.kContrasena) else {
+            return nil
+        }
+        let ingresada = contrasenaTextField.text ?? ""
+        if ingresada != guardada {
+            return "La contraseña no coincide con la registrada."
+        }
+        return nil
+    }
 
     @objc private func ingresarTapped() {
         ingresarButton.bounce()
@@ -138,24 +132,30 @@ class LoginViewController: UIViewController {
             return
         }
 
-        let usuario = usuarioTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        UserDefaults.standard.set(usuario, forKey: Constantes.kUsuario)
-        UserDefaults.standard.synchronize()
+        if let mensaje = validarContrasena() {
+            mostrarAlerta(mensaje)
+            return
+        }
 
-        let tareas = TareasViewController(nibName: nil, bundle: nil)
-        navigationController?.pushViewController(tareas, animated: true)
+        let usuario = usuarioTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let contrasena = contrasenaTextField.text ?? ""
+
+        UserDefaults.standard.set(usuario, forKey: Constantes.kUsuario)
+        UserDefaults.standard.set(contrasena, forKey: Constantes.kContrasena)
+
+        navigationController?.pushViewController(TareasViewController(), animated: true)
     }
 
     @objc private func cerrarSesionTapped() {
         cerrarSesionButton.bounce()
 
         UserDefaults.standard.removeObject(forKey: Constantes.kUsuario)
-        UserDefaults.standard.synchronize()
+        UserDefaults.standard.removeObject(forKey: Constantes.kContrasena)
         usuarioTextField.text = nil
         contrasenaTextField.text = nil
 
         let alerta = UIAlertController(title: "Sesión cerrada",
-                                       message: "Se eliminó el usuario guardado.",
+                                       message: "Se eliminó el usuario y la contraseña guardados.",
                                        preferredStyle: .alert)
         alerta.addAction(UIAlertAction(title: "Aceptar", style: .default))
         present(alerta, animated: true)
@@ -169,8 +169,6 @@ class LoginViewController: UIViewController {
         present(alerta, animated: true)
     }
 }
-
-// MARK: - UITextFieldDelegate
 
 extension LoginViewController: UITextFieldDelegate {
 

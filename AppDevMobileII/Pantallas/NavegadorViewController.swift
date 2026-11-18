@@ -4,9 +4,6 @@ import CoreData
 
 class NavegadorViewController: UIViewController {
 
-    // MARK: - Propiedades
-
-    /// Cantidad de tareas que envia la pantalla anterior.
     var cantidadTareas: Int = 0
 
     private var webView: WKWebView!
@@ -17,8 +14,6 @@ class NavegadorViewController: UIViewController {
     private var botonAdelante: UIBarButtonItem!
 
     private let urlInicial = URL(string: "https://www.apple.com")!
-
-    // MARK: - Ciclo de vida
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -34,8 +29,6 @@ class NavegadorViewController: UIViewController {
         mostrarResumen()
     }
 
-    // MARK: - Configuracion
-
     private func configurarWebView() {
         let configuracion = WKWebViewConfiguration()
         configuracion.defaultWebpagePreferences.allowsContentJavaScript = true
@@ -45,7 +38,6 @@ class NavegadorViewController: UIViewController {
         webView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(webView)
 
-        // WKWebView anclado al area segura en los cuatro lados.
         NSLayoutConstraint.activate([
             webView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             webView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
@@ -53,7 +45,6 @@ class NavegadorViewController: UIViewController {
             webView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
 
-        // Recarga al jalar la pagina.
         refreshControl.addTarget(self, action: #selector(recargar), for: .valueChanged)
         webView.scrollView.refreshControl = refreshControl
     }
@@ -77,8 +68,6 @@ class NavegadorViewController: UIViewController {
         searchBar.searchBarStyle = .minimal
         navigationItem.titleView = searchBar
     }
-
-    // MARK: - Navegacion web
 
     private func cargar(url: URL) {
         guard url.scheme == "https" else {
@@ -118,38 +107,27 @@ class NavegadorViewController: UIViewController {
         present(alerta, animated: true)
     }
 
-    // MARK: - Resumen final
-
     private func mostrarResumen() {
         let usuario = UserDefaults.standard.string(forKey: Constantes.kUsuario) ?? "Sin usuario"
-
-        // Se cuenta directo en Core Data para que el resumen siempre este al dia.
         let solicitud = NSFetchRequest<NSManagedObject>(entityName: "Tarea")
         let total = (try? Constantes.contexto.count(for: solicitud)) ?? cantidadTareas
 
-        let mensaje = "Usuario: \(usuario)\nTareas registradas: \(total)"
-
         let alerta = UIAlertController(title: "Resumen",
-                                       message: mensaje,
+                                       message: "Usuario: \(usuario)\nTareas registradas: \(total)",
                                        preferredStyle: .alert)
         alerta.addAction(UIAlertAction(title: "Aceptar", style: .default))
         present(alerta, animated: true)
     }
 }
 
-// MARK: - UISearchBarDelegate
-
 extension NavegadorViewController: UISearchBarDelegate {
 
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         searchBar.resignFirstResponder()
-        guard let texto = searchBar.text,
-              let url = normalizarURL(texto) else { return }
+        guard let texto = searchBar.text, let url = normalizarURL(texto) else { return }
         cargar(url: url)
     }
 }
-
-// MARK: - WKNavigationDelegate
 
 extension NavegadorViewController: WKNavigationDelegate {
 
