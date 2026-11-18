@@ -1,4 +1,5 @@
 import UIKit
+import CoreData
 
 // MARK: - Constantes del proyecto
 
