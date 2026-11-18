@@ -6,11 +6,6 @@ class LoginViewController: UIViewController {
         let textField = UITextField()
         textField.placeholder = "Usuario"
         textField.borderStyle = .roundedRect
-        textField.autocapitalizationType = .none
-        textField.autocorrectionType = .no
-        textField.textContentType = .username
-        textField.returnKeyType = .next
-        textField.clearButtonMode = .whileEditing
         textField.translatesAutoresizingMaskIntoConstraints = false
         return textField
     }()
@@ -20,15 +15,12 @@ class LoginViewController: UIViewController {
         textField.placeholder = "Contraseña"
         textField.borderStyle = .roundedRect
         textField.isSecureTextEntry = true
-        textField.textContentType = .password
-        textField.returnKeyType = .go
-        textField.clearButtonMode = .whileEditing
         textField.translatesAutoresizingMaskIntoConstraints = false
         return textField
     }()
 
-    private let ingresarButton: BounceButton = {
-        let button = BounceButton(type: .system)
+    private let ingresarButton: UIButton = {
+        let button = UIButton(type: .system)
         button.setTitle("Ingresar", for: .normal)
         button.setTitleColor(.white, for: .normal)
         button.titleLabel?.font = .boldSystemFont(ofSize: 18)
@@ -37,11 +29,10 @@ class LoginViewController: UIViewController {
         return button
     }()
 
-    private let cerrarSesionButton: BounceButton = {
-        let button = BounceButton(type: .system)
+    private let cerrarSesionButton: UIButton = {
+        let button = UIButton(type: .system)
         button.setTitle("Cerrar sesión", for: .normal)
         button.setTitleColor(.systemRed, for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -51,7 +42,7 @@ class LoginViewController: UIViewController {
         view.backgroundColor = .systemBackground
         title = "Login"
         configurarUI()
-        cargarUsuario()
+        usuarioTextField.text = UserDefaults.standard.string(forKey: Constantes.kUsuario)
     }
 
     private func configurarUI() {
@@ -61,8 +52,6 @@ class LoginViewController: UIViewController {
         view.addSubview(cerrarSesionButton)
 
         ingresarButton.round()
-        usuarioTextField.delegate = self
-        contrasenaTextField.delegate = self
         ingresarButton.addTarget(self, action: #selector(ingresarTapped), for: .touchUpInside)
         cerrarSesionButton.addTarget(self, action: #selector(cerrarSesionTapped), for: .touchUpInside)
 
@@ -81,8 +70,8 @@ class LoginViewController: UIViewController {
             contrasenaTextField.bottomAnchor.constraint(equalTo: ingresarButton.topAnchor,
                                                         constant: -Constantes.vertical),
 
-            ingresarButton.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
             ingresarButton.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+            ingresarButton.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
             ingresarButton.leadingAnchor.constraint(equalTo: usuarioTextField.leadingAnchor),
             ingresarButton.trailingAnchor.constraint(equalTo: usuarioTextField.trailingAnchor),
             ingresarButton.heightAnchor.constraint(equalToConstant: 52),
@@ -93,11 +82,7 @@ class LoginViewController: UIViewController {
         ])
     }
 
-    private func cargarUsuario() {
-        usuarioTextField.text = UserDefaults.standard.string(forKey: Constantes.kUsuario)
-    }
-
-    private func validarCampos() -> String? {
+    private func validar() -> String? {
         let usuario = usuarioTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let contrasena = contrasenaTextField.text ?? ""
 
@@ -113,35 +98,20 @@ class LoginViewController: UIViewController {
         return nil
     }
 
-    private func validarContrasena() -> String? {
-        guard let guardada = UserDefaults.standard.string(forKey: Constantes.kContrasena) else {
-            return nil
-        }
-        let ingresada = contrasenaTextField.text ?? ""
-        if ingresada != guardada {
-            return "La contraseña no coincide con la registrada."
-        }
-        return nil
-    }
-
     @objc private func ingresarTapped() {
         ingresarButton.bounce()
 
-        if let mensaje = validarCampos() {
-            mostrarAlerta(mensaje)
-            return
-        }
-
-        if let mensaje = validarContrasena() {
-            mostrarAlerta(mensaje)
+        if let mensaje = validar() {
+            let alerta = UIAlertController(title: "Error al iniciar sesión",
+                                           message: mensaje,
+                                           preferredStyle: .alert)
+            alerta.addAction(UIAlertAction(title: "Aceptar", style: .default))
+            present(alerta, animated: true)
             return
         }
 
         let usuario = usuarioTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let contrasena = contrasenaTextField.text ?? ""
-
         UserDefaults.standard.set(usuario, forKey: Constantes.kUsuario)
-        UserDefaults.standard.set(contrasena, forKey: Constantes.kContrasena)
 
         navigationController?.pushViewController(TareasViewController(), animated: true)
     }
@@ -150,35 +120,13 @@ class LoginViewController: UIViewController {
         cerrarSesionButton.bounce()
 
         UserDefaults.standard.removeObject(forKey: Constantes.kUsuario)
-        UserDefaults.standard.removeObject(forKey: Constantes.kContrasena)
         usuarioTextField.text = nil
         contrasenaTextField.text = nil
 
         let alerta = UIAlertController(title: "Sesión cerrada",
-                                       message: "Se eliminó el usuario y la contraseña guardados.",
+                                       message: "Se eliminó el usuario guardado.",
                                        preferredStyle: .alert)
         alerta.addAction(UIAlertAction(title: "Aceptar", style: .default))
         present(alerta, animated: true)
-    }
-
-    private func mostrarAlerta(_ mensaje: String) {
-        let alerta = UIAlertController(title: "Error al iniciar sesión",
-                                       message: mensaje,
-                                       preferredStyle: .alert)
-        alerta.addAction(UIAlertAction(title: "Aceptar", style: .default))
-        present(alerta, animated: true)
-    }
-}
-
-extension LoginViewController: UITextFieldDelegate {
-
-    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        if textField == usuarioTextField {
-            contrasenaTextField.becomeFirstResponder()
-        } else {
-            textField.resignFirstResponder()
-            ingresarTapped()
-        }
-        return true
     }
 }

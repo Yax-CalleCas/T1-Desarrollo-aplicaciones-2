@@ -4,8 +4,6 @@ import CoreData
 
 class NavegadorViewController: UIViewController {
 
-    var cantidadTareas: Int = 0
-
     private var webView: WKWebView!
     private let searchBar = UISearchBar()
     private let refreshControl = UIRefreshControl()
@@ -13,23 +11,11 @@ class NavegadorViewController: UIViewController {
     private var botonAtras: UIBarButtonItem!
     private var botonAdelante: UIBarButtonItem!
 
-    private let urlInicial = URL(string: "https://www.apple.com")!
-
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         title = "Navegador"
-        configurarWebView()
-        configurarBarra()
-        cargar(url: urlInicial)
-    }
 
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        mostrarResumen()
-    }
-
-    private func configurarWebView() {
         let configuracion = WKWebViewConfiguration()
         configuracion.defaultWebpagePreferences.allowsContentJavaScript = true
 
@@ -47,9 +33,7 @@ class NavegadorViewController: UIViewController {
 
         refreshControl.addTarget(self, action: #selector(recargar), for: .valueChanged)
         webView.scrollView.refreshControl = refreshControl
-    }
 
-    private func configurarBarra() {
         botonAtras = UIBarButtonItem(image: UIImage(systemName: "chevron.left"),
                                      style: .plain,
                                      target: self,
@@ -60,57 +44,22 @@ class NavegadorViewController: UIViewController {
                                         action: #selector(irAdelante))
         botonAtras.isEnabled = false
         botonAdelante.isEnabled = false
-
         navigationItem.leftBarButtonItems = [botonAtras, botonAdelante]
 
         searchBar.placeholder = "Escribe una dirección https"
         searchBar.delegate = self
         searchBar.searchBarStyle = .minimal
         navigationItem.titleView = searchBar
+
+        webView.load(URLRequest(url: URL(string: "https://www.apple.com")!))
     }
 
-    private func cargar(url: URL) {
-        guard url.scheme == "https" else {
-            mostrarAlertaSoloHTTPS()
-            return
-        }
-        webView.load(URLRequest(url: url))
-    }
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
 
-    private func normalizarURL(_ texto: String) -> URL? {
-        let limpio = texto.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !limpio.isEmpty else { return nil }
-
-        if limpio.lowercased().hasPrefix("https://") {
-            return URL(string: limpio)
-        }
-        return URL(string: "https://\(limpio)")
-    }
-
-    @objc private func irAtras() {
-        if webView.canGoBack { webView.goBack() }
-    }
-
-    @objc private func irAdelante() {
-        if webView.canGoForward { webView.goForward() }
-    }
-
-    @objc private func recargar() {
-        webView.reload()
-    }
-
-    private func mostrarAlertaSoloHTTPS() {
-        let alerta = UIAlertController(title: "Dirección no válida",
-                                       message: "Solo se permiten direcciones https.",
-                                       preferredStyle: .alert)
-        alerta.addAction(UIAlertAction(title: "Aceptar", style: .default))
-        present(alerta, animated: true)
-    }
-
-    private func mostrarResumen() {
         let usuario = UserDefaults.standard.string(forKey: Constantes.kUsuario) ?? "Sin usuario"
         let solicitud = NSFetchRequest<NSManagedObject>(entityName: "Tarea")
-        let total = (try? Constantes.contexto.count(for: solicitud)) ?? cantidadTareas
+        let total = (try? Constantes.contexto.count(for: solicitud)) ?? 0
 
         let alerta = UIAlertController(title: "Resumen",
                                        message: "Usuario: \(usuario)\nTareas registradas: \(total)",
@@ -118,14 +67,44 @@ class NavegadorViewController: UIViewController {
         alerta.addAction(UIAlertAction(title: "Aceptar", style: .default))
         present(alerta, animated: true)
     }
+
+    @objc private func irAtras() {
+        if webView.canGoBack {
+            webView.goBack()
+        }
+    }
+
+    @objc private func irAdelante() {
+        if webView.canGoForward {
+            webView.goForward()
+        }
+    }
+
+    @objc private func recargar() {
+        webView.reload()
+    }
 }
 
 extension NavegadorViewController: UISearchBarDelegate {
 
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         searchBar.resignFirstResponder()
-        guard let texto = searchBar.text, let url = normalizarURL(texto) else { return }
-        cargar(url: url)
+
+        guard let texto = searchBar.text?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+            !texto.isEmpty else { return }
+
+        guard let url = URL(string: "https://\(texto)"),
+              url.scheme == "https" else {
+            let alerta = UIAlertController(title: "Dirección no válida",
+                                           message: "Solo se permiten direcciones https.",
+                                           preferredStyle: .alert)
+            alerta.addAction(UIAlertAction(title: "Aceptar", style: .default))
+            present(alerta, animated: true)
+            return
+        }
+
+        webView.load(URLRequest(url: url))
     }
 }
 
@@ -135,17 +114,5 @@ extension NavegadorViewController: WKNavigationDelegate {
         refreshControl.endRefreshing()
         botonAtras.isEnabled = webView.canGoBack
         botonAdelante.isEnabled = webView.canGoForward
-    }
-
-    func webView(_ webView: WKWebView,
-                 didFail navigation: WKNavigation!,
-                 withError error: Error) {
-        refreshControl.endRefreshing()
-    }
-
-    func webView(_ webView: WKWebView,
-                 didFailProvisionalNavigation navigation: WKNavigation!,
-                 withError error: Error) {
-        refreshControl.endRefreshing()
     }
 }

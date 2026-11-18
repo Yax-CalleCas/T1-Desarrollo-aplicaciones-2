@@ -22,11 +22,3 @@ extension UIButton {
         }
     }
 }
-
-final class BounceButton: UIButton {
-
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        super.touchesBegan(touches, with: event)
-        bounce()
-    }
-}

@@ -12,8 +12,8 @@ class InicioViewController: UIViewController {
         return label
     }()
 
-    private let comenzarButton: BounceButton = {
-        let button = BounceButton(type: .system)
+    private let comenzarButton: UIButton = {
+        let button = UIButton(type: .system)
         button.setTitle("Comenzar", for: .normal)
         button.setTitleColor(.white, for: .normal)
         button.titleLabel?.font = .boldSystemFont(ofSize: 18)
@@ -53,8 +53,8 @@ class InicioViewController: UIViewController {
             tituloLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor,
                                                   constant: -Constantes.horizontal),
 
-            comenzarButton.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
             comenzarButton.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+            comenzarButton.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
             comenzarButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor,
                                                     constant: Constantes.horizontal),
             comenzarButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor,

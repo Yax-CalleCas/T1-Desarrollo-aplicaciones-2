@@ -4,7 +4,6 @@ import CoreData
 enum Constantes {
 
     static let kUsuario = "kUsuario"
-    static let kContrasena = "kContrasena"
 
     static let horizontal: CGFloat = 24
     static let vertical: CGFloat = 12

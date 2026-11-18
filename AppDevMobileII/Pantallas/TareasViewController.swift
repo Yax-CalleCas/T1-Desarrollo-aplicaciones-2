@@ -24,9 +24,21 @@ class TareasViewController: UIViewController {
         cargarTareas()
     }
 
+    private func cargarTareas() {
+        let contexto = Constantes.contexto
+        let solicitud = NSFetchRequest<NSManagedObject>(entityName: "Tarea")
+        solicitud.sortDescriptors = [NSSortDescriptor(key: "nombre", ascending: true)]
+
+        do {
+            tareas = try contexto.fetch(solicitud)
+            tableView.reloadData()
+        } catch {
+            print("Error al recuperar tareas: \(error)")
+        }
+    }
+
     private func configurarUI() {
         tableView.dataSource = self
-        tableView.delegate = self
         view.addSubview(tableView)
 
         let agregar = UIBarButtonItem(barButtonSystemItem: .add,
@@ -46,53 +58,12 @@ class TareasViewController: UIViewController {
         ])
     }
 
-    private func cargarTareas() {
-        let contexto = Constantes.contexto
-        let solicitud = NSFetchRequest<NSManagedObject>(entityName: "Tarea")
-        solicitud.sortDescriptors = [NSSortDescriptor(key: "nombre", ascending: true)]
-
-        do {
-            tareas = try contexto.fetch(solicitud)
-            tableView.reloadData()
-        } catch {
-            print("Error al recuperar tareas: \(error)")
-        }
-    }
-
-    private func guardarTarea(nombre: String) {
-        let contexto = Constantes.contexto
-        guard let entidad = NSEntityDescription.entity(forEntityName: "Tarea", in: contexto) else { return }
-        let tarea = NSManagedObject(entity: entidad, insertInto: contexto)
-        tarea.setValue(nombre, forKey: "nombre")
-
-        do {
-            try contexto.save()
-            cargarTareas()
-        } catch {
-            print("Error al guardar la tarea: \(error)")
-        }
-    }
-
-    private func eliminarTarea(at indexPath: IndexPath) {
-        let contexto = Constantes.contexto
-        contexto.delete(tareas[indexPath.row])
-
-        do {
-            try contexto.save()
-            tareas.remove(at: indexPath.row)
-            tableView.deleteRows(at: [indexPath], with: .automatic)
-        } catch {
-            print("Error al eliminar la tarea: \(error)")
-        }
-    }
-
     @objc private func agregarTarea() {
         let alerta = UIAlertController(title: "Nueva tarea",
                                        message: "Escribe el nombre de la tarea",
                                        preferredStyle: .alert)
         alerta.addTextField { textField in
             textField.placeholder = "Nombre"
-            textField.autocapitalizationType = .sentences
         }
 
         alerta.addAction(UIAlertAction(title: "Cancelar", style: .cancel))
@@ -101,16 +72,25 @@ class TareasViewController: UIViewController {
                   let nombre = alerta?.textFields?.first?.text?
                     .trimmingCharacters(in: .whitespacesAndNewlines),
                   !nombre.isEmpty else { return }
-            self.guardarTarea(nombre: nombre)
+
+            let contexto = Constantes.contexto
+            guard let entidad = NSEntityDescription.entity(forEntityName: "Tarea", in: contexto) else { return }
+            let tarea = NSManagedObject(entity: entidad, insertInto: contexto)
+            tarea.setValue(nombre, forKey: "nombre")
+
+            do {
+                try contexto.save()
+                self.cargarTareas()
+            } catch {
+                print("Error al guardar la tarea: \(error)")
+            }
         })
 
         present(alerta, animated: true)
     }
 
     @objc private func irAlNavegador() {
-        let navegador = NavegadorViewController()
-        navegador.cantidadTareas = tareas.count
-        navigationController?.pushViewController(navegador, animated: true)
+        navigationController?.pushViewController(NavegadorViewController(), animated: true)
     }
 }
 
@@ -123,22 +103,6 @@ extension TareasViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let celda = tableView.dequeueReusableCell(withIdentifier: "celdaTarea", for: indexPath)
         celda.textLabel?.text = tareas[indexPath.row].value(forKey: "nombre") as? String
-        celda.accessoryType = .none
         return celda
-    }
-}
-
-extension TareasViewController: UITableViewDelegate {
-
-    func tableView(_ tableView: UITableView,
-                   commit editingStyle: UITableViewCell.EditingStyle,
-                   forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete {
-            eliminarTarea(at: indexPath)
-        }
-    }
-
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
     }
 }
